@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 
 const EstadoIncidente = {
   REVISION: 'En Revisión',
@@ -230,37 +230,8 @@ const FormularioIncidente = () => {
 
       {/* Sección de vista previa */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Vista previa del comunicado</h2>
-          <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
-            onClick={() => {
-              // Alternativa a html2canvas
-              try {
-                // Selecciona el texto del comunicado
-                const range = document.createRange();
-                const comunicado = document.getElementById('comunicado-preview');
-                if (comunicado) {
-                  range.selectNode(comunicado);
-                  window.getSelection().removeAllRanges();
-                  window.getSelection().addRange(range);
-                  document.execCommand('copy');
-                  window.getSelection().removeAllRanges();
-                  alert('Contenido del comunicado copiado al portapapeles');
-                }
-              } catch (err) {
-                console.error('Error al copiar:', err);
-                alert('No se pudo copiar el contenido. Intenta usando Ctrl+C o Cmd+C');
-              }
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-            </svg>
-            Copiar comunicado
-          </button>
-        </div>
-        <div id="comunicado-preview" className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200 max-w-2xl mx-auto">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">Vista previa del comunicado</h2>
+        <div className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200 max-w-2xl mx-auto">
           <div className="text-center mb-2">
             <h1 className="text-navy-700 font-bold text-xl">GERENCIA DE PRODUCCIÓN Y SERVICIOS</h1>
             <h2 className="text-blue-700 text-lg">Gestión de Incidentes</h2>
