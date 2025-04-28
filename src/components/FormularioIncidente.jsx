@@ -20,6 +20,7 @@ const FormularioIncidente = () => {
   const [accionesRecuperacion, setAccionesRecuperacion] = useState('');
   const [causaRaiz, setCausaRaiz] = useState('');
   const [mostrarTabla, setMostrarTabla] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [tiempos, setTiempos] = useState([
     { inicio: '06:47:45', fin: '07:04:47', total: '0:17:02' },
     { inicio: '07:51:45', fin: '07:59:45', total: '0:08:00' },
