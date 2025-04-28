@@ -224,20 +224,22 @@ const FormularioIncidente = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
-              <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
-                <span className="font-bold">Prioridad</span><br/>
-                <span className="text-center">{prioridad}</span>
+            <div className="mb-0">
+              <div className="flex justify-between items-center">
+                <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
+                <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
+                  <span className="font-bold">Prioridad</span><br/>
+                  <span className="text-center">{prioridad}</span>
+                </div>
               </div>
-            </div>
-
-            <div className="flex items-center mb-3">
-              <div 
-                className="w-3 h-3 rounded-full mr-2" 
-                style={{ backgroundColor: getColorEstado() }}
-              ></div>
-              <span className="text-green-600 font-medium">{estado}</span>
+              
+              <div className="flex items-center mt-1 mb-4">
+                <div 
+                  className="w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: getColorEstado() }}
+                ></div>
+                <span className="text-green-600 font-medium">{estado}</span>
+              </div>
             </div>
 
             <div className="mb-3">
@@ -250,10 +252,10 @@ const FormularioIncidente = () => {
                 <>
                   <div className="flex items-center">
                     <span className="text-blue-500">📅</span>
-                    <span className="ml-2">Inicio: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
+                    <span className="ml-2">Fin: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-yellow-500">⏱️</span>
+                    <span className="text-yellow-500">⏳</span>
                     <span className="ml-2">Duración: {calcularDuracion()}</span>
                   </div>
                 </>
