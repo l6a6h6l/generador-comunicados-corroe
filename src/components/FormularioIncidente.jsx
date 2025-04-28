@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 const EstadoIncidente = {
@@ -8,6 +7,7 @@ const EstadoIncidente = {
 };
 
 const FormularioIncidente = () => {
+  // eslint-disable-next-line no-unused-vars
   const [estado, setEstado] = useState(EstadoIncidente.REVISION);
   const [prioridad, setPrioridad] = useState('P1');
   const [fechaInicio, setFechaInicio] = useState('');
@@ -223,92 +223,96 @@ const FormularioIncidente = () => {
             <hr className="my-2 border-blue-200" />
           </div>
 
-          <div className="flex justify-between items-center mb-4">
-            <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
-            <div className="bg-blue-100 px-3 py-1 rounded-md">
-              <span className="font-bold">Prioridad</span><br/>
-              <span>{prioridad}</span>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
+              <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
+                <span className="font-bold">Prioridad</span><br/>
+                <span className="text-center">{prioridad}</span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center mb-3">
-            <div 
-              className="w-3 h-3 rounded-full mr-2" 
-              style={{ backgroundColor: getColorEstado() }}
-            ></div>
-            <span className="text-green-600 font-medium">{estado}</span>
-          </div>
-
-          <div className="mb-3">
-            <div className="flex items-center">
-              <span className="text-blue-500">📅</span>
-              <span className="ml-2">Inicio: {fechaInicio || 'aaaa-mm-dd'} Hora: {horaInicio || 'hh:mm'}</span>
+            <div className="flex items-center mb-3">
+              <div 
+                className="w-3 h-3 rounded-full mr-2" 
+                style={{ backgroundColor: getColorEstado() }}
+              ></div>
+              <span className="text-green-600 font-medium">{estado}</span>
             </div>
-            
+
+            <div className="mb-3">
+              <div className="flex items-center">
+                <span className="text-blue-500">📅</span>
+                <span className="ml-2">Inicio: {fechaInicio || 'aaaa-mm-dd'} Hora: {horaInicio || 'hh:mm'}</span>
+              </div>
+              
+              {estado === EstadoIncidente.RECUPERADO && (
+                <>
+                  <div className="flex items-center">
+                    <span className="text-blue-500">📅</span>
+                    <span className="ml-2">Inicio: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-yellow-500">⏱️</span>
+                    <span className="ml-2">Duración: {calcularDuracion()}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {mostrarTabla && estado === EstadoIncidente.RECUPERADO && (
+              <div className="mb-3">
+                <table className="w-full bg-gray-800 text-white text-sm">
+                  <thead>
+                    <tr>
+                      <th className="p-1 border border-gray-700">HORA INICIO</th>
+                      <th className="p-1 border border-gray-700">HORA FIN</th>
+                      <th className="p-1 border border-gray-700">TIEMPO TOTAL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tiempos.map((tiempo, index) => (
+                      <tr key={index}>
+                        <td className="p-1 border border-gray-700">{tiempo.inicio}</td>
+                        <td className="p-1 border border-gray-700">{tiempo.fin}</td>
+                        <td className="p-1 border border-gray-700">{tiempo.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="mt-2">
+                  <div><strong>Diagnóstico:</strong> {diagnostico || 'Descripción del diagnóstico.'}</div>
+                </div>
+              </div>
+            )}
+
             {estado === EstadoIncidente.RECUPERADO && (
               <>
-                <div className="flex items-center">
-                  <span className="text-blue-500">📅</span>
-                  <span className="ml-2">Inicio: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
+                <div className="mb-2">
+                  <strong>Acciones de recuperación:</strong> {accionesRecuperacion || 'Acción que permitió la recuperación del servicio'}
                 </div>
-                <div className="flex items-center">
-                  <span className="text-yellow-500">⏱️</span>
-                  <span className="ml-2">Duración: {calcularDuracion()}</span>
+                <div className="mb-2">
+                  <strong>Causa raíz:</strong> {causaRaiz || 'Descripción de la causa'}
                 </div>
               </>
             )}
-          </div>
 
-          {mostrarTabla && estado === EstadoIncidente.RECUPERADO && (
-            <div className="mb-3">
-              <table className="w-full bg-gray-800 text-white text-sm">
-                <thead>
-                  <tr>
-                    <th className="p-1 border border-gray-700">HORA INICIO</th>
-                    <th className="p-1 border border-gray-700">HORA FIN</th>
-                    <th className="p-1 border border-gray-700">TIEMPO TOTAL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tiempos.map((tiempo, index) => (
-                    <tr key={index}>
-                      <td className="p-1 border border-gray-700">{tiempo.inicio}</td>
-                      <td className="p-1 border border-gray-700">{tiempo.fin}</td>
-                      <td className="p-1 border border-gray-700">{tiempo.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="mt-2">
-                <div><strong>Diagnóstico:</strong> {diagnostico || 'Descripción del diagnóstico.'}</div>
-              </div>
-            </div>
-          )}
-
-          {estado === EstadoIncidente.RECUPERADO && (
-            <>
+            {(estado === EstadoIncidente.REVISION || estado === EstadoIncidente.AVANCE) && (
               <div className="mb-2">
-                <strong>Acciones de recuperación:</strong> {accionesRecuperacion || 'Acción que permitió la recuperación del servicio'}
+                <strong>Situación actual:</strong> {situacionActual || 'Descripción que ayude a entender en donde está la revisión.'}
               </div>
-              <div className="mb-2">
-                <strong>Causa raíz:</strong> {causaRaiz || 'Descripción de la causa'}
-              </div>
-            </>
-          )}
+            )}
 
-          {(estado === EstadoIncidente.REVISION || estado === EstadoIncidente.AVANCE) && (
             <div className="mb-2">
-              <strong>Situación actual:</strong> {situacionActual || 'Descripción que ayude a entender en donde está la revisión.'}
+              <strong>Impacto:</strong> {impacto || 'Afectación servicio / usuarios'}
             </div>
-          )}
 
-          <div className="mb-2">
-            <strong>Impacto:</strong> {impacto || 'Afectación servicio / usuarios'}
-          </div>
-
-          <div className="mb-2">
-            <span className="text-orange-500">📣</span> <strong>NOTA:</strong> {nota || 'Observaciones con detalle que permitan brindar más información en el caso que amerite.'}
+            {nota && (
+              <div className="mb-2">
+                <span className="text-orange-500">📣</span> <strong>NOTA:</strong> {nota}
+              </div>
+            )}
           </div>
         </div>
       </div>
