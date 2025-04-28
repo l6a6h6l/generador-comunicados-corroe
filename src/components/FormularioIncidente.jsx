@@ -32,8 +32,23 @@ const FormularioIncidente = () => {
   const calcularDuracion = () => {
     if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) return "00h 00min 00s";
     
-    // Aquí iría la lógica real para calcular la duración
-    return "00h 00min 00s";
+    // Crear objetos Date para inicio y fin
+    const inicio = new Date(`${fechaInicio}T${horaInicio}`);
+    const fin = new Date(`${fechaFin}T${horaFin}`);
+    
+    // Calcular la diferencia en milisegundos
+    const diferencia = fin - inicio;
+    
+    if (diferencia < 0) return "00h 00min 00s"; // Prevenir duraciones negativas
+    
+    // Convertir a horas, minutos y segundos
+    const segundosTotales = Math.floor(diferencia / 1000);
+    const horas = Math.floor(segundosTotales / 3600);
+    const minutos = Math.floor((segundosTotales % 3600) / 60);
+    const segundos = segundosTotales % 60;
+    
+    // Formatear como hh:mm:ss
+    return `${horas.toString().padStart(2, '0')}h ${minutos.toString().padStart(2, '0')}min ${segundos.toString().padStart(2, '0')}s`;
   };
   
   // Obtener color según estado
@@ -224,21 +239,29 @@ const FormularioIncidente = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-            <div className="mb-0">
-              <div className="flex justify-between items-center">
-                <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
-                <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
-                  <span className="font-bold">Prioridad</span><br/>
-                  <span className="text-center">{prioridad}</span>
+            <div className="mb-4">
+              <div className="mb-0 pb-0 leading-none">
+                <div className="flex justify-between items-center">
+                  <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
+                  <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
+                    <span className="font-bold">Prioridad</span><br/>
+                    <span className="text-center">{prioridad}</span>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center mt-1 mb-4">
+              <div className="flex items-center mt-0 pt-0">
                 <div 
-                  className="w-3 h-3 rounded-full mr-2" 
+                  className="w-6 h-6 rounded-full mr-2" 
                   style={{ backgroundColor: getColorEstado() }}
                 ></div>
-                <span className="text-green-600 font-medium">{estado}</span>
+                <span 
+                  className="font-medium text-lg"
+                  style={{ 
+                    color: estado === EstadoIncidente.REVISION ? '#FFD700' : 
+                           estado === EstadoIncidente.AVANCE ? '#FFA07A' : '#90EE90' 
+                  }}
+                >{estado}</span>
               </div>
             </div>
 
