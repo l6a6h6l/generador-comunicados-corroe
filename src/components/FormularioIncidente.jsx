@@ -94,12 +94,45 @@ const FormularioIncidente = () => {
   };
   
   // Función para copiar la vista previa al portapapeles
-  const copiarVistaPrevia = () => {
-    // En un entorno de simulación, simplemente mostramos el efecto visual
-    setCopiado(true);
-    setTimeout(() => {
-      setCopiado(false);
-    }, 2000);
+  const copiarVistaPrevia = async () => {
+    if (vistaPreviewRef.current) {
+      try {
+        const contenido = vistaPreviewRef.current.innerText || vistaPreviewRef.current.textContent;
+        
+        // Usar la API moderna navigator.clipboard si está disponible
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(contenido);
+          setCopiado(true);
+          setTimeout(() => {
+            setCopiado(false);
+          }, 2000);
+        } else {
+          // Método alternativo como respaldo
+          const textArea = document.createElement('textarea');
+          textArea.value = contenido;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          const exitoCopia = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (exitoCopia) {
+            setCopiado(true);
+            setTimeout(() => {
+              setCopiado(false);
+            }, 2000);
+          } else {
+            console.error('Fallo al usar execCommand copy');
+          }
+        }
+      } catch (err) {
+        console.error('Error al copiar:', err);
+      }
+    }
   };
   
   // Obtener color según estado
@@ -360,14 +393,14 @@ const FormularioIncidente = () => {
           ref={vistaPreviewRef}
           className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200 max-w-2xl mx-auto"
         >
-          <div className="text-center mb-2">
-            <h1 className="text-navy-700 font-bold text-xl">GERENCIA DE PRODUCCIÓN Y SERVICIOS</h1>
-            <h2 className="text-blue-700 text-lg">Gestión de Incidentes</h2>
-            <hr className="my-2 border-blue-200" />
+          <div className="text-center mb-1">
+            <h1 className="text-blue-900 font-bold text-xl">GERENCIA DE PRODUCCIÓN Y SERVICIOS</h1>
+            <h2 className="text-blue-700 font-bold">Gestión de Incidentes</h2>
+            <hr className="my-1 border-blue-200" />
           </div>
 
-          <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-            <div className="mb-4">
+          <div className="bg-white p-3 rounded-lg border border-gray-200 mb-4">
+            <div className="mb-3">
               <div className="mb-0 pb-0 leading-none">
                 <div className="flex justify-between items-center">
                   <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
@@ -380,11 +413,11 @@ const FormularioIncidente = () => {
               
               <div className="flex items-center mt-0 pt-0">
                 <div 
-                  className="w-6 h-6 rounded-full mr-2" 
+                  className="w-4 h-4 rounded-full mr-1" 
                   style={{ backgroundColor: getColorEstado() }}
                 ></div>
                 <span 
-                  className="font-medium text-lg"
+                  className="font-medium text-sm"
                   style={{ 
                     color: estado === EstadoIncidente.REVISION ? '#FFD700' : 
                            estado === EstadoIncidente.AVANCE ? '#FFA07A' : '#90EE90' 
@@ -394,21 +427,21 @@ const FormularioIncidente = () => {
             </div>
 
             {!mostrarTabla && (
-              <div className="mb-3">
-                <div className="flex items-center">
+              <div className="mb-2">
+                <div className="flex items-center text-sm">
                   <span className="text-blue-500">📅</span>
-                  <span className="ml-2">Inicio: {fechaInicio || 'aaaa-mm-dd'} Hora: {horaInicio || 'hh:mm'}</span>
+                  <span className="ml-1"><strong>Inicio:</strong> {fechaInicio || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaInicio || 'hh:mm'}</span>
                 </div>
                 
                 {estado === EstadoIncidente.RECUPERADO && (
                   <>
-                    <div className="flex items-center">
+                    <div className="flex items-center text-sm">
                       <span className="text-blue-500">📅</span>
-                      <span className="ml-2">Fin: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
+                      <span className="ml-1"><strong>Fin:</strong> {fechaFin || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaFin || 'hh:mm'}</span>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center text-sm">
                       <span className="text-yellow-500">⏳</span>
-                      <span className="ml-2">Duración: {calcularDuracion()}</span>
+                      <span className="ml-1"><strong>Duración:</strong> {calcularDuracion()}</span>
                     </div>
                   </>
                 )}
@@ -417,15 +450,15 @@ const FormularioIncidente = () => {
 
             {mostrarTabla && estado === EstadoIncidente.RECUPERADO && (
               <div className="mb-3">
-                <table className="w-full bg-gray-800 text-white text-sm">
-                  <thead>
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-800 text-white">
                     <tr>
                       <th className="p-1 border border-gray-700">HORA INICIO</th>
                       <th className="p-1 border border-gray-700">HORA FIN</th>
                       <th className="p-1 border border-gray-700">TIEMPO TOTAL</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="bg-white text-black">
                     {tiempos.map((tiempo, index) => (
                       <tr key={index}>
                         <td className="p-1 border border-gray-700">{tiempo.inicio}</td>
@@ -437,34 +470,34 @@ const FormularioIncidente = () => {
                 </table>
 
                 <div className="mt-2">
-                  <div><strong>Diagnóstico:</strong> {diagnostico || 'Descripción del diagnóstico.'}</div>
+                  <div className="text-sm leading-tight"><strong>Diagnóstico:</strong> {diagnostico || 'Descripción del diagnóstico.'}</div>
                 </div>
               </div>
             )}
 
             {estado === EstadoIncidente.RECUPERADO && (
               <>
-                <div className="mb-2">
+                <div className="mb-1 text-sm leading-tight">
                   <strong>Acciones de recuperación:</strong> {accionesRecuperacion || 'Acción que permitió la recuperación del servicio'}
                 </div>
-                <div className="mb-2">
+                <div className="mb-1 text-sm leading-tight">
                   <strong>Causa raíz:</strong> {causaRaiz || 'Descripción de la causa'}
                 </div>
               </>
             )}
 
             {(estado === EstadoIncidente.REVISION || estado === EstadoIncidente.AVANCE) && (
-              <div className="mb-2">
+              <div className="mb-1 text-sm leading-tight">
                 <strong>Situación actual:</strong> {situacionActual || 'Descripción que ayude a entender en donde está la revisión.'}
               </div>
             )}
 
-            <div className="mb-2">
+            <div className="mb-1 text-sm leading-tight">
               <strong>Impacto:</strong> {impacto || 'Afectación servicio / usuarios'}
             </div>
 
             {nota && (
-              <div className="mb-2">
+              <div className="mb-1 text-sm leading-tight">
                 <span className="text-orange-500">📣</span> <strong>NOTA:</strong> {nota}
               </div>
             )}
