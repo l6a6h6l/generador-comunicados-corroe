@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const EstadoIncidente = {
   REVISION: 'En Revisión',
@@ -7,26 +7,68 @@ const EstadoIncidente = {
 };
 
 const FormularioIncidente = () => {
-  // eslint-disable-next-line no-unused-vars
   const [estado, setEstado] = useState(EstadoIncidente.REVISION);
   const [prioridad, setPrioridad] = useState('P1');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [horaInicio, setHoraInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [horaFin, setHoraFin] = useState('');
-  const [situacionActual, setSituacionActual] = useState('');
-  const [impacto, setImpacto] = useState('');
-  const [nota, setNota] = useState('');
-  const [accionesRecuperacion, setAccionesRecuperacion] = useState('');
-  const [causaRaiz, setCausaRaiz] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('2025-04-28');
+  const [horaInicio, setHoraInicio] = useState('10:15:00');
+  const [fechaFin, setFechaFin] = useState('2025-04-28');
+  const [horaFin, setHoraFin] = useState('12:30:00');
+  const [situacionActual, setSituacionActual] = useState('Equipo técnico realizando diagnóstico inicial.');
+  const [impacto, setImpacto] = useState('Afecta a 30% de usuarios del sistema ERP.');
+  const [nota, setNota] = useState('Se recomienda usar sistema alternativo mientras dure la incidencia.');
+  const [accionesRecuperacion, setAccionesRecuperacion] = useState('Se reinició el servidor principal y se actualizaron parámetros de configuración.');
+  const [causaRaiz, setCausaRaiz] = useState('Saturación de memoria en servidor de aplicaciones por consultas no optimizadas.');
   const [mostrarTabla, setMostrarTabla] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [tiempos, setTiempos] = useState([
-    { inicio: '06:47:45', fin: '07:04:47', total: '0:17:02' },
-    { inicio: '07:51:45', fin: '07:59:45', total: '0:08:00' },
-    { inicio: '08:43:08', fin: '08:48:02', total: '0:04:54' }
+    { inicio: '10:15:00', fin: '10:45:00', total: '0:30:00' },
+    { inicio: '11:05:00', fin: '11:32:00', total: '0:27:00' },
   ]);
-  const [diagnostico, setDiagnostico] = useState('');
+  const [diagnostico, setDiagnostico] = useState('Se identificaron consultas SQL recursivas que consumían memoria excesiva del servidor de aplicaciones.');
+  const [copiado, setCopiado] = useState(false);
+  const vistaPreviewRef = useRef(null);
+  
+  // Función para añadir una nueva fila a la tabla de tiempos
+  const agregarTiempo = () => {
+    setTiempos([...tiempos, { inicio: '', fin: '', total: '' }]);
+  };
+
+  // Función para actualizar una entrada en la tabla de tiempos
+  const actualizarTiempo = (index, campo, valor) => {
+    const nuevosTiempos = [...tiempos];
+    nuevosTiempos[index][campo] = valor;
+    
+    // Calcular total si inicio y fin están presentes
+    if (campo === 'inicio' || campo === 'fin') {
+      if (nuevosTiempos[index].inicio && nuevosTiempos[index].fin) {
+        // Convertir a Date para calcular la diferencia
+        const [horaInicio, minInicio, segInicio = '00'] = nuevosTiempos[index].inicio.split(':').map(Number);
+        const [horaFin, minFin, segFin = '00'] = nuevosTiempos[index].fin.split(':').map(Number);
+        
+        // Calcular segundos totales
+        const inicioEnSegundos = horaInicio * 3600 + minInicio * 60 + +segInicio;
+        const finEnSegundos = horaFin * 3600 + minFin * 60 + +segFin;
+        const diferenciaSegundos = finEnSegundos - inicioEnSegundos;
+        
+        if (diferenciaSegundos >= 0) {
+          // Convertir de vuelta a formato h:m:s
+          const horas = Math.floor(diferenciaSegundos / 3600);
+          const minutos = Math.floor((diferenciaSegundos % 3600) / 60);
+          const segundos = diferenciaSegundos % 60;
+          nuevosTiempos[index].total = `${horas}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+        } else {
+          nuevosTiempos[index].total = 'Error en tiempo';
+        }
+      }
+    }
+    
+    setTiempos(nuevosTiempos);
+  };
+
+  // Función para eliminar una fila de la tabla de tiempos
+  const eliminarTiempo = (index) => {
+    const nuevosTiempos = tiempos.filter((_, i) => i !== index);
+    setTiempos(nuevosTiempos);
+  };
   
   // Calcular duración automáticamente si hay fechas de inicio y fin
   const calcularDuracion = () => {
@@ -51,6 +93,15 @@ const FormularioIncidente = () => {
     return `${horas.toString().padStart(2, '0')}h ${minutos.toString().padStart(2, '0')}min ${segundos.toString().padStart(2, '0')}s`;
   };
   
+  // Función para copiar la vista previa al portapapeles
+  const copiarVistaPrevia = () => {
+    // En un entorno de simulación, simplemente mostramos el efecto visual
+    setCopiado(true);
+    setTimeout(() => {
+      setCopiado(false);
+    }, 2000);
+  };
+  
   // Obtener color según estado
   const getColorEstado = () => {
     switch(estado) {
@@ -66,7 +117,7 @@ const FormularioIncidente = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto p-4">
       {/* Sección del formulario */}
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Formulario de Gestión de Incidentes</h2>
@@ -115,6 +166,7 @@ const FormularioIncidente = () => {
                 className="w-full p-2 border rounded"
                 value={horaInicio}
                 onChange={(e) => setHoraInicio(e.target.value)}
+                step="1"
               />
             </div>
           </div>
@@ -138,6 +190,7 @@ const FormularioIncidente = () => {
                     className="w-full p-2 border rounded"
                     value={horaFin}
                     onChange={(e) => setHoraFin(e.target.value)}
+                    step="1"
                   />
                 </div>
               </div>
@@ -177,16 +230,76 @@ const FormularioIncidente = () => {
               </div>
 
               {mostrarTabla && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Diagnóstico</label>
-                  <textarea 
-                    className="w-full p-2 border rounded"
-                    rows="3"
-                    placeholder="Diagnóstico del incidente"
-                    value={diagnostico}
-                    onChange={(e) => setDiagnostico(e.target.value)}
-                  ></textarea>
-                </div>
+                <>
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Tabla de Tiempos</label>
+                      <button 
+                        type="button" 
+                        className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                        onClick={agregarTiempo}
+                      >
+                        Añadir Tiempo
+                      </button>
+                    </div>
+                    <table className="w-full border-collapse border border-gray-300">
+                      <thead>
+                        <tr className="bg-gray-200">
+                          <th className="border border-gray-300 p-2">Hora Inicio</th>
+                          <th className="border border-gray-300 p-2">Hora Fin</th>
+                          <th className="border border-gray-300 p-2">Tiempo Total</th>
+                          <th className="border border-gray-300 p-2">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tiempos.map((tiempo, index) => (
+                          <tr key={index}>
+                            <td className="border border-gray-300 p-2">
+                              <input 
+                                type="time" 
+                                className="w-full p-1 border rounded"
+                                value={tiempo.inicio}
+                                onChange={(e) => actualizarTiempo(index, 'inicio', e.target.value)}
+                                step="1"
+                              />
+                            </td>
+                            <td className="border border-gray-300 p-2">
+                              <input 
+                                type="time" 
+                                className="w-full p-1 border rounded"
+                                value={tiempo.fin}
+                                onChange={(e) => actualizarTiempo(index, 'fin', e.target.value)}
+                                step="1"
+                              />
+                            </td>
+                            <td className="border border-gray-300 p-2 text-center">
+                              {tiempo.total}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-center">
+                              <button 
+                                type="button" 
+                                className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
+                                onClick={() => eliminarTiempo(index)}
+                              >
+                                Eliminar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Diagnóstico</label>
+                    <textarea 
+                      className="w-full p-2 border rounded"
+                      rows="3"
+                      placeholder="Diagnóstico del incidente"
+                      value={diagnostico}
+                      onChange={(e) => setDiagnostico(e.target.value)}
+                    ></textarea>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -230,8 +343,23 @@ const FormularioIncidente = () => {
 
       {/* Sección de vista previa */}
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Vista previa del comunicado</h2>
-        <div className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200 max-w-2xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">Vista previa del comunicado</h2>
+          <button 
+            type="button" 
+            className={`${copiado ? 'bg-green-600' : 'bg-green-500'} text-white px-4 py-2 rounded hover:bg-green-600 flex items-center transition duration-200`}
+            onClick={copiarVistaPrevia}
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+            </svg>
+            {copiado ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
+        <div 
+          ref={vistaPreviewRef}
+          className="bg-blue-50 p-4 rounded-lg shadow border border-blue-200 max-w-2xl mx-auto"
+        >
           <div className="text-center mb-2">
             <h1 className="text-navy-700 font-bold text-xl">GERENCIA DE PRODUCCIÓN Y SERVICIOS</h1>
             <h2 className="text-blue-700 text-lg">Gestión de Incidentes</h2>
@@ -265,25 +393,27 @@ const FormularioIncidente = () => {
               </div>
             </div>
 
-            <div className="mb-3">
-              <div className="flex items-center">
-                <span className="text-blue-500">📅</span>
-                <span className="ml-2">Inicio: {fechaInicio || 'aaaa-mm-dd'} Hora: {horaInicio || 'hh:mm'}</span>
+            {!mostrarTabla && (
+              <div className="mb-3">
+                <div className="flex items-center">
+                  <span className="text-blue-500">📅</span>
+                  <span className="ml-2">Inicio: {fechaInicio || 'aaaa-mm-dd'} Hora: {horaInicio || 'hh:mm'}</span>
+                </div>
+                
+                {estado === EstadoIncidente.RECUPERADO && (
+                  <>
+                    <div className="flex items-center">
+                      <span className="text-blue-500">📅</span>
+                      <span className="ml-2">Fin: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-yellow-500">⏳</span>
+                      <span className="ml-2">Duración: {calcularDuracion()}</span>
+                    </div>
+                  </>
+                )}
               </div>
-              
-              {estado === EstadoIncidente.RECUPERADO && (
-                <>
-                  <div className="flex items-center">
-                    <span className="text-blue-500">📅</span>
-                    <span className="ml-2">Fin: {fechaFin || 'aaaa-mm-dd'} Hora: {horaFin || 'hh:mm'}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-yellow-500">⏳</span>
-                    <span className="ml-2">Duración: {calcularDuracion()}</span>
-                  </div>
-                </>
-              )}
-            </div>
+            )}
 
             {mostrarTabla && estado === EstadoIncidente.RECUPERADO && (
               <div className="mb-3">
