@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const EstadoIncidente = {
   REVISION: 'En Revisión',
@@ -7,8 +7,23 @@ const EstadoIncidente = {
 };
 
 const FormularioIncidente = () => {
+  // Valores para cálculo de prioridad
+  const [afectacionTotal, setAfectacionTotal] = useState(false);
+  const [afectacionParcial, setAfectacionParcial] = useState(false);
+  const [delayIncidente, setDelayIncidente] = useState(false);
+  const [impactoMasivo, setImpactoMasivo] = useState(false);
+  const [impactoMultiple, setImpactoMultiple] = useState(false);
+  const [impactoPuntual, setImpactoPuntual] = useState(true); // Por defecto
+  const [criticaUrgencia, setCriticaUrgencia] = useState(false);
+  const [altaUrgencia, setAltaUrgencia] = useState(false);
+  const [mediaUrgencia, setMediaUrgencia] = useState(true); // Por defecto
+  const [bajaUrgencia, setBajaUrgencia] = useState(false);
+  const [horarioAlta, setHorarioAlta] = useState(true); // Por defecto
+  const [horarioBaja, setHorarioBaja] = useState(false);
+  const [puntajePrioridad, setPuntajePrioridad] = useState(6); // Valor inicial
+
   const [estado, setEstado] = useState(EstadoIncidente.REVISION);
-  const [prioridad, setPrioridad] = useState('P1');
+  const [prioridad, setPrioridad] = useState('P2');
   const [fechaInicio, setFechaInicio] = useState('2025-04-28');
   const [horaInicio, setHoraInicio] = useState('10:15:00');
   const [fechaFin, setFechaFin] = useState('2025-04-28');
@@ -24,7 +39,7 @@ const FormularioIncidente = () => {
     { inicio: '11:05:00', fin: '11:32:00', total: '0:27:00' },
   ]);
   const [diagnostico, setDiagnostico] = useState('Se identificaron consultas SQL recursivas que consumían memoria excesiva del servidor de aplicaciones.');
-  const [copiado, setCopiado] = useState(false);
+  const [mostrarCalculadoraPrioridad, setMostrarCalculadoraPrioridad] = useState(false);
   const vistaPreviewRef = useRef(null);
   
   // Función para añadir una nueva fila a la tabla de tiempos
@@ -93,47 +108,53 @@ const FormularioIncidente = () => {
     return `${horas.toString().padStart(2, '0')}h ${minutos.toString().padStart(2, '0')}min ${segundos.toString().padStart(2, '0')}s`;
   };
   
-  // Función para copiar la vista previa al portapapeles
-  const copiarVistaPrevia = async () => {
-    if (vistaPreviewRef.current) {
-      try {
-        const contenido = vistaPreviewRef.current.innerText || vistaPreviewRef.current.textContent;
-        
-        // Usar la API moderna navigator.clipboard si está disponible
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(contenido);
-          setCopiado(true);
-          setTimeout(() => {
-            setCopiado(false);
-          }, 2000);
-        } else {
-          // Método alternativo como respaldo
-          const textArea = document.createElement('textarea');
-          textArea.value = contenido;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          
-          const exitoCopia = document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
-          if (exitoCopia) {
-            setCopiado(true);
-            setTimeout(() => {
-              setCopiado(false);
-            }, 2000);
-          } else {
-            console.error('Fallo al usar execCommand copy');
-          }
-        }
-      } catch (err) {
-        console.error('Error al copiar:', err);
-      }
+  // Calcular prioridad basada en los criterios seleccionados
+  const calcularPrioridad = () => {
+    let puntaje = 0;
+    
+    // Afectación
+    if (afectacionTotal) puntaje += 3;
+    else if (afectacionParcial) puntaje += 2;
+    
+    // Impacto
+    if (delayIncidente) puntaje += 1;
+    if (impactoMasivo) puntaje += 3;
+    else if (impactoMultiple) puntaje += 2;
+    else if (impactoPuntual) puntaje += 1;
+    
+    // Urgencia
+    if (criticaUrgencia) puntaje += 4;
+    else if (altaUrgencia) puntaje += 3;
+    else if (mediaUrgencia) puntaje += 2;
+    else if (bajaUrgencia) puntaje += 1;
+    
+    // Horario
+    if (horarioAlta) puntaje += 2;
+    else if (horarioBaja) puntaje += 1;
+    
+    setPuntajePrioridad(puntaje);
+    
+    // Determinar P1, P2, P3 o P4 basado en puntaje
+    if (puntaje >= 12) {
+      setPrioridad('P1');
+    } else if (puntaje >= 10 && puntaje <= 11) {
+      setPrioridad('P2');
+    } else if (puntaje >= 5 && puntaje <= 9) {
+      setPrioridad('P3');
+    } else {
+      setPrioridad('P4');
     }
   };
+  
+  // Efecto para calcular la prioridad cuando cambian los criterios
+  useEffect(() => {
+    calcularPrioridad();
+  }, [
+    afectacionTotal, afectacionParcial, delayIncidente,
+    impactoMasivo, impactoMultiple, impactoPuntual,
+    criticaUrgencia, altaUrgencia, mediaUrgencia, bajaUrgencia,
+    horarioAlta, horarioBaja
+  ]);
   
   // Obtener color según estado
   const getColorEstado = () => {
@@ -169,18 +190,256 @@ const FormularioIncidente = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">Prioridad</label>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium mb-1 text-gray-700">Prioridad</label>
+                <button 
+                  type="button"
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                  onClick={() => setMostrarCalculadoraPrioridad(!mostrarCalculadoraPrioridad)}
+                >
+                  {mostrarCalculadoraPrioridad ? 'Ocultar calculadora' : 'Calcular prioridad'}
+                </button>
+              </div>
               <select 
                 className="w-full p-2 border rounded"
                 value={prioridad}
                 onChange={(e) => setPrioridad(e.target.value)}
+                disabled={mostrarCalculadoraPrioridad}
               >
                 <option value="P1">P1</option>
                 <option value="P2">P2</option>
                 <option value="P3">P3</option>
+                <option value="P4">P4</option>
               </select>
             </div>
           </div>
+          
+          {mostrarCalculadoraPrioridad && (
+            <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-bold mb-2 text-blue-800 text-center">Calculadora de Prioridad</h3>
+              <p className="text-center mb-2">Puntaje actual: <span className="font-bold">{puntajePrioridad}</span> - Prioridad: <span className="font-bold text-red-600">{prioridad}</span></p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                {/* Afectación */}
+                <div className="border-r border-blue-200 pr-2">
+                  <h4 className="font-semibold text-blue-700 mb-1">Afectación</h4>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="afectacionTotal"
+                      name="afectacion"
+                      checked={afectacionTotal}
+                      onChange={() => {
+                        setAfectacionTotal(true);
+                        setAfectacionParcial(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="afectacionTotal" className="text-sm">Indisponibilidad Total (3)</label>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="afectacionParcial"
+                      name="afectacion"
+                      checked={afectacionParcial}
+                      onChange={() => {
+                        setAfectacionParcial(true);
+                        setAfectacionTotal(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="afectacionParcial" className="text-sm">Indisponibilidad Parcial (2)</label>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="checkbox"
+                      id="delayIncidente"
+                      checked={delayIncidente}
+                      onChange={() => setDelayIncidente(!delayIncidente)}
+                      className="mr-1"
+                    />
+                    <label htmlFor="delayIncidente" className="text-sm">Delay (1)</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="afectacionNinguna"
+                      name="afectacion"
+                      checked={!afectacionTotal && !afectacionParcial}
+                      onChange={() => {
+                        setAfectacionTotal(false);
+                        setAfectacionParcial(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="afectacionNinguna" className="text-sm">Ninguna (0)</label>
+                  </div>
+                </div>
+                
+                {/* Impacto */}
+                <div className="border-r border-blue-200 pr-2">
+                  <h4 className="font-semibold text-blue-700 mb-1">Impacto</h4>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="impactoMasivo"
+                      name="impactoUsuarios"
+                      checked={impactoMasivo}
+                      onChange={() => {
+                        setImpactoMasivo(true);
+                        setImpactoMultiple(false);
+                        setImpactoPuntual(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="impactoMasivo" className="text-sm">Masivo (3)</label>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="impactoMultiple"
+                      name="impactoUsuarios"
+                      checked={impactoMultiple}
+                      onChange={() => {
+                        setImpactoMasivo(false);
+                        setImpactoMultiple(true);
+                        setImpactoPuntual(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="impactoMultiple" className="text-sm">Múltiple (2)</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="impactoPuntual"
+                      name="impactoUsuarios"
+                      checked={impactoPuntual}
+                      onChange={() => {
+                        setImpactoMasivo(false);
+                        setImpactoMultiple(false);
+                        setImpactoPuntual(true);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="impactoPuntual" className="text-sm">Puntual (1)</label>
+                  </div>
+                </div>
+                
+                {/* Urgencia */}
+                <div className="border-r border-blue-200 pr-2">
+                  <h4 className="font-semibold text-blue-700 mb-1">Urgencia</h4>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="criticaUrgencia"
+                      name="urgencia"
+                      checked={criticaUrgencia}
+                      onChange={() => {
+                        setCriticaUrgencia(true);
+                        setAltaUrgencia(false);
+                        setMediaUrgencia(false);
+                        setBajaUrgencia(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="criticaUrgencia" className="text-sm">Crítica (4)</label>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="altaUrgencia"
+                      name="urgencia"
+                      checked={altaUrgencia}
+                      onChange={() => {
+                        setCriticaUrgencia(false);
+                        setAltaUrgencia(true);
+                        setMediaUrgencia(false);
+                        setBajaUrgencia(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="altaUrgencia" className="text-sm">Alta (3)</label>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="mediaUrgencia"
+                      name="urgencia"
+                      checked={mediaUrgencia}
+                      onChange={() => {
+                        setCriticaUrgencia(false);
+                        setAltaUrgencia(false);
+                        setMediaUrgencia(true);
+                        setBajaUrgencia(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="mediaUrgencia" className="text-sm">Media (2)</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="bajaUrgencia"
+                      name="urgencia"
+                      checked={bajaUrgencia}
+                      onChange={() => {
+                        setCriticaUrgencia(false);
+                        setAltaUrgencia(false);
+                        setMediaUrgencia(false);
+                        setBajaUrgencia(true);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="bajaUrgencia" className="text-sm">Baja (1)</label>
+                  </div>
+                </div>
+                
+                {/* Horario */}
+                <div>
+                  <h4 className="font-semibold text-blue-700 mb-1">Horario</h4>
+                  <div className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      id="horarioAlta"
+                      name="horario"
+                      checked={horarioAlta}
+                      onChange={() => {
+                        setHorarioAlta(true);
+                        setHorarioBaja(false);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="horarioAlta" className="text-sm text-xs">Alta Carga TX 08h00-23h00 (2)</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="horarioBaja"
+                      name="horario"
+                      checked={horarioBaja}
+                      onChange={() => {
+                        setHorarioAlta(false);
+                        setHorarioBaja(true);
+                      }}
+                      className="mr-1"
+                    />
+                    <label htmlFor="horarioBaja" className="text-sm text-xs">Baja Carga TX 23h00-08h00 (1)</label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-t border-blue-200 pt-2">
+                <p className="text-sm mb-1"><strong>Criterios de prioridad:</strong></p>
+                <p className="text-xs">- P1 (12): <span className="font-semibold">Alta</span> - Atención en 5 minutos</p>
+                <p className="text-xs">- P2 (10-11): <span className="font-semibold">Media</span> - Atención en 10 minutos</p>
+                <p className="text-xs">- P3 (5-9): <span className="font-semibold">Baja</span> - Atención en 15 minutos</p>
+                <p className="text-xs">- P4 (4): <span className="font-semibold">Muy Baja</span> - Atención en 20 minutos</p>
+              </div>
+            </div>
+          )}
+          
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -378,16 +637,6 @@ const FormularioIncidente = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Vista previa del comunicado</h2>
-          <button 
-            type="button" 
-            className={`${copiado ? 'bg-green-600' : 'bg-green-500'} text-white px-4 py-2 rounded hover:bg-green-600 flex items-center transition duration-200`}
-            onClick={copiarVistaPrevia}
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-            </svg>
-            {copiado ? 'Copiado!' : 'Copiar'}
-          </button>
         </div>
         <div 
           ref={vistaPreviewRef}
@@ -404,7 +653,7 @@ const FormularioIncidente = () => {
               <div className="mb-0 pb-0 leading-none">
                 <div className="flex justify-between items-center">
                   <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
-                  <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
+                                        <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
                     <span className="font-bold">Prioridad</span><br/>
                     <span className="text-center">{prioridad}</span>
                   </div>
@@ -419,8 +668,8 @@ const FormularioIncidente = () => {
                 <span 
                   className="font-medium text-sm"
                   style={{ 
-                    color: estado === EstadoIncidente.REVISION ? '#FFD700' : 
-                           estado === EstadoIncidente.AVANCE ? '#FFA07A' : '#90EE90' 
+                    color: estado === EstadoIncidente.REVISION ? '#B7950B' : 
+                           estado === EstadoIncidente.AVANCE ? '#E74C3C' : '#2ECC71' 
                   }}
                 >{estado}</span>
               </div>
