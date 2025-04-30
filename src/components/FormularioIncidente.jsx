@@ -109,15 +109,15 @@ const FormularioIncidente = () => {
   };
   
   // Calcular prioridad basada en los criterios seleccionados
-  const calcularPrioridad = () => {
+  const calcularPrioridad = React.useCallback(() => {
     let puntaje = 0;
     
     // Afectación
     if (afectacionTotal) puntaje += 3;
     else if (afectacionParcial) puntaje += 2;
+    if (delayIncidente) puntaje += 1;
     
     // Impacto
-    if (delayIncidente) puntaje += 1;
     if (impactoMasivo) puntaje += 3;
     else if (impactoMultiple) puntaje += 2;
     else if (impactoPuntual) puntaje += 1;
@@ -144,17 +144,17 @@ const FormularioIncidente = () => {
     } else {
       setPrioridad('P4');
     }
-  };
-  
-  // Efecto para calcular la prioridad cuando cambian los criterios
-  useEffect(() => {
-    calcularPrioridad();
   }, [
     afectacionTotal, afectacionParcial, delayIncidente,
     impactoMasivo, impactoMultiple, impactoPuntual,
     criticaUrgencia, altaUrgencia, mediaUrgencia, bajaUrgencia,
     horarioAlta, horarioBaja
   ]);
+  
+  // Efecto para calcular la prioridad cuando cambian los criterios
+  useEffect(() => {
+    calcularPrioridad();
+  }, [calcularPrioridad]);
   
   // Obtener color según estado
   const getColorEstado = () => {
