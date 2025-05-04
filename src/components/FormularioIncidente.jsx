@@ -2,26 +2,76 @@ import React, { useState } from 'react';
 
 const FormularioIncidente = () => {
   // Estados para el formulario principal
+  const [descripcionIncidente, setDescripcionIncidente] = useState('DESCRIPCIÓN DEL INCIDENTE');
   const [estado, setEstado] = useState('En Revisión');
   const [prioridad, setPrioridad] = useState('P2');
-  const [fechaInicio, setFechaInicio] = useState('2025-04-28');
-  const [horaInicio, setHoraInicio] = useState('10:15:00');
-  const [fechaFin, setFechaFin] = useState('2025-04-28');
-  const [horaFin, setHoraFin] = useState('12:30:00');
-  const [situacionActual, setSituacionActual] = useState('Equipo técnico realizando diagnóstico inicial.');
-  const [impacto, setImpacto] = useState('Afecta a 30% de usuarios del sistema ERP.');
-  const [nota, setNota] = useState('Se recomienda usar sistema alternativo mientras dure la incidencia.');
-  const [accionesRecuperacion, setAccionesRecuperacion] = useState('Se reinició el servidor principal y se actualizaron parámetros de configuración.');
-  const [causaRaiz, setCausaRaiz] = useState('Saturación de memoria en servidor de aplicaciones por consultas no optimizadas.');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [situacionActual, setSituacionActual] = useState('Descripción que ayude a entender en donde está la revisión.');
+  const [impacto, setImpacto] = useState('Afectación servicio / usuarios');
+  const [nota, setNota] = useState('Observaciones con detalle que permitan brindar más información en el caso que amerite');
+  const [accionesRecuperacion, setAccionesRecuperacion] = useState('Acción que permitió la recuperación del servicio');
+  const [causaRaiz, setCausaRaiz] = useState('Descripción de la causa');
   const [mostrarTabla, setMostrarTabla] = useState(false);
   const [diagnostico, setDiagnostico] = useState('Se identificaron consultas SQL recursivas que consumían memoria excesiva del servidor de aplicaciones.');
   const [mostrarCalculadoraPrioridad, setMostrarCalculadoraPrioridad] = useState(false);
+  
+  // Estados para el cálculo de prioridad
+  const [afectacion, setAfectacion] = useState(0);
+  const [impactoUsuarios, setImpactoUsuarios] = useState(1);
+  const [urgencia, setUrgencia] = useState(2);
+  const [horario, setHorario] = useState(2);
   
   // Estado para la tabla de tiempos
   const [tiempos, setTiempos] = useState([
     { inicio: '10:15:00', fin: '10:45:00', total: '0:30:00' },
     { inicio: '11:05:00', fin: '11:32:00', total: '0:27:00' },
   ]);
+
+  // Calcular el puntaje de prioridad
+  const calcularPuntajePrioridad = () => {
+    return afectacion + impactoUsuarios + urgencia + horario;
+  };
+
+  // Actualizar la prioridad basada en el puntaje
+  const actualizarPrioridad = (puntaje) => {
+    if (puntaje >= 12) {
+      setPrioridad('P1');
+    } else if (puntaje >= 10 && puntaje <= 11) {
+      setPrioridad('P2');
+    } else if (puntaje >= 5 && puntaje <= 9) {
+      setPrioridad('P3');
+    } else {
+      setPrioridad('P4');
+    }
+  };
+
+  // Manejar cambios en el cálculo de prioridad
+  const handleAfectacionChange = (value) => {
+    setAfectacion(value);
+    const newPuntaje = value + impactoUsuarios + urgencia + horario;
+    actualizarPrioridad(newPuntaje);
+  };
+
+  const handleImpactoChange = (value) => {
+    setImpactoUsuarios(value);
+    const newPuntaje = afectacion + value + urgencia + horario;
+    actualizarPrioridad(newPuntaje);
+  };
+
+  const handleUrgenciaChange = (value) => {
+    setUrgencia(value);
+    const newPuntaje = afectacion + impactoUsuarios + value + horario;
+    actualizarPrioridad(newPuntaje);
+  };
+
+  const handleHorarioChange = (value) => {
+    setHorario(value);
+    const newPuntaje = afectacion + impactoUsuarios + urgencia + value;
+    actualizarPrioridad(newPuntaje);
+  };
 
   // Función para añadir una nueva fila a la tabla de tiempos
   const agregarTiempo = () => setTiempos([...tiempos, { inicio: '', fin: '', total: '' }]);
@@ -90,6 +140,18 @@ const FormularioIncidente = () => {
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Formulario de Gestión de Incidentes</h2>
         <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+          {/* Descripción del incidente - nuevo campo */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1 text-gray-700">Descripción del Incidente</label>
+            <input 
+              type="text" 
+              className="w-full p-2 border rounded"
+              value={descripcionIncidente}
+              onChange={(e) => setDescripcionIncidente(e.target.value)}
+              placeholder="DESCRIPCIÓN DEL INCIDENTE"
+            />
+          </div>
+
           {/* Estado y Prioridad */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -131,17 +193,17 @@ const FormularioIncidente = () => {
           {mostrarCalculadoraPrioridad && (
             <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 mb-4">
               <h3 className="text-lg font-bold mb-2 text-blue-800 text-center">Calculadora de Prioridad</h3>
-              <p className="text-center mb-2">Puntaje actual: <span className="font-bold">6</span> - Prioridad: <span className="font-bold text-red-600">{prioridad}</span></p>
+              <p className="text-center mb-2">Puntaje actual: <span className="font-bold">{calcularPuntajePrioridad()}</span> - Prioridad: <span className="font-bold text-red-600">{prioridad}</span></p>
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 {/* Afectación */}
                 <div className="border-r border-blue-200 p-2 rounded-lg bg-blue-100">
                   <h4 className="font-semibold text-blue-700 mb-2 text-center">Afectación</h4>
                   {[
-                    {id: 'afectacionTotal', label: 'Indisponibilidad Total (3)'},
-                    {id: 'afectacionParcial', label: 'Indisponibilidad Parcial (2)'},
-                    {id: 'delayIncidente', label: 'Delay (1)'},
-                    {id: 'afectacionNinguna', label: 'Ninguna (0)', defaultChecked: true}
+                    {id: 'afectacionTotal', label: 'Indisponibilidad Total (3)', value: 3},
+                    {id: 'afectacionParcial', label: 'Indisponibilidad Parcial (2)', value: 2},
+                    {id: 'delayIncidente', label: 'Delay (1)', value: 1},
+                    {id: 'afectacionNinguna', label: 'Ninguna (0)', value: 0, defaultChecked: true}
                   ].map(item => (
                     <div key={item.id} className="flex items-center mb-2">
                       <input
@@ -149,7 +211,8 @@ const FormularioIncidente = () => {
                         id={item.id}
                         name="afectacion"
                         className="mr-2"
-                        defaultChecked={item.defaultChecked}
+                        checked={afectacion === item.value}
+                        onChange={() => handleAfectacionChange(item.value)}
                       />
                       <label htmlFor={item.id} className="text-sm">{item.label}</label>
                     </div>
@@ -160,9 +223,9 @@ const FormularioIncidente = () => {
                 <div className="border-r border-blue-200 p-2 rounded-lg bg-blue-100">
                   <h4 className="font-semibold text-blue-700 mb-2 text-center">Impacto</h4>
                   {[
-                    {id: 'impactoMasivo', label: 'Masivo (3)'},
-                    {id: 'impactoMultiple', label: 'Múltiple (2)'},
-                    {id: 'impactoPuntual', label: 'Puntual (1)', defaultChecked: true}
+                    {id: 'impactoMasivo', label: 'Masivo (3)', value: 3},
+                    {id: 'impactoMultiple', label: 'Múltiple (2)', value: 2},
+                    {id: 'impactoPuntual', label: 'Puntual (1)', value: 1, defaultChecked: true}
                   ].map(item => (
                     <div key={item.id} className="flex items-center mb-2">
                       <input
@@ -170,7 +233,8 @@ const FormularioIncidente = () => {
                         id={item.id}
                         name="impactoUsuarios"
                         className="mr-2"
-                        defaultChecked={item.defaultChecked}
+                        checked={impactoUsuarios === item.value}
+                        onChange={() => handleImpactoChange(item.value)}
                       />
                       <label htmlFor={item.id} className="text-sm">{item.label}</label>
                     </div>
@@ -181,10 +245,10 @@ const FormularioIncidente = () => {
                 <div className="border-r border-blue-200 p-2 rounded-lg bg-blue-100">
                   <h4 className="font-semibold text-blue-700 mb-2 text-center">Urgencia</h4>
                   {[
-                    {id: 'criticaUrgencia', label: 'Crítica (4)'},
-                    {id: 'altaUrgencia', label: 'Alta (3)'},
-                    {id: 'mediaUrgencia', label: 'Media (2)', defaultChecked: true},
-                    {id: 'bajaUrgencia', label: 'Baja (1)'}
+                    {id: 'criticaUrgencia', label: 'Crítica (4)', value: 4},
+                    {id: 'altaUrgencia', label: 'Alta (3)', value: 3},
+                    {id: 'mediaUrgencia', label: 'Media (2)', value: 2, defaultChecked: true},
+                    {id: 'bajaUrgencia', label: 'Baja (1)', value: 1}
                   ].map(item => (
                     <div key={item.id} className="flex items-center mb-2">
                       <input
@@ -192,7 +256,8 @@ const FormularioIncidente = () => {
                         id={item.id}
                         name="urgencia"
                         className="mr-2"
-                        defaultChecked={item.defaultChecked}
+                        checked={urgencia === item.value}
+                        onChange={() => handleUrgenciaChange(item.value)}
                       />
                       <label htmlFor={item.id} className="text-sm">{item.label}</label>
                     </div>
@@ -203,8 +268,8 @@ const FormularioIncidente = () => {
                 <div className="p-2 rounded-lg bg-blue-100">
                   <h4 className="font-semibold text-blue-700 mb-2 text-center">Horario</h4>
                   {[
-                    {id: 'horarioAlta', label: 'Alta Carga TX 08h00-23h00 (2)', defaultChecked: true},
-                    {id: 'horarioBaja', label: 'Baja Carga TX 23h00-08h00 (1)'}
+                    {id: 'horarioAlta', label: 'Alta Carga TX 08h00-23h00 (2)', value: 2, defaultChecked: true},
+                    {id: 'horarioBaja', label: 'Baja Carga TX 23h00-08h00 (1)', value: 1}
                   ].map(item => (
                     <div key={item.id} className="flex items-center mb-2">
                       <input
@@ -212,7 +277,8 @@ const FormularioIncidente = () => {
                         id={item.id}
                         name="horario"
                         className="mr-2"
-                        defaultChecked={item.defaultChecked}
+                        checked={horario === item.value}
+                        onChange={() => handleHorarioChange(item.value)}
                       />
                       <label htmlFor={item.id} className="text-xs">{item.label}</label>
                     </div>
@@ -249,6 +315,7 @@ const FormularioIncidente = () => {
                 className="w-full p-2 border rounded"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
+                placeholder="aaaa-mm-dd"
               />
             </div>
             <div>
@@ -259,6 +326,7 @@ const FormularioIncidente = () => {
                 value={horaInicio}
                 onChange={(e) => setHoraInicio(e.target.value)}
                 step="1"
+                placeholder="hh:mm:ss"
               />
             </div>
           </div>
@@ -274,6 +342,7 @@ const FormularioIncidente = () => {
                     className="w-full p-2 border rounded"
                     value={fechaFin}
                     onChange={(e) => setFechaFin(e.target.value)}
+                    placeholder="aaaa-mm-dd"
                   />
                 </div>
                 <div>
@@ -284,6 +353,7 @@ const FormularioIncidente = () => {
                     value={horaFin}
                     onChange={(e) => setHoraFin(e.target.value)}
                     step="1"
+                    placeholder="hh:mm:ss"
                   />
                 </div>
               </div>
@@ -431,47 +501,48 @@ const FormularioIncidente = () => {
 
           <div className="bg-white p-3 rounded-lg border border-gray-200 mb-4">
             <div className="mb-3">
-              <div className="mb-0 pb-0 leading-none">
+              <div>
                 <div className="flex justify-between items-center">
-                  <div className="font-bold text-blue-800 text-lg">DESCRIPCIÓN DEL INCIDENTE</div>
+                  <div>
+                    <div className="font-bold text-blue-900 text-xl uppercase">{descripcionIncidente}</div>
+                    <div className="flex items-center -mt-1">
+                      <div 
+                        className="w-4 h-4 rounded-full mr-1" 
+                        style={{ backgroundColor: getColorEstado() }}
+                      ></div>
+                      <span 
+                        className="font-bold text-sm"
+                        style={{ 
+                          color: estado === 'En Revisión' ? '#B7950B' : 
+                                estado === 'Avance' ? '#E74C3C' : '#2ECC71' 
+                        }}
+                      >{estado}</span>
+                    </div>
+                  </div>
                   <div className="bg-blue-100 px-3 py-1 rounded-md text-center">
-                    <span className="font-bold">Prioridad</span><br/>
-                    <span className="text-center">{prioridad}</span>
+                    <span className="font-bold text-sm">Prioridad</span><br/>
+                    <span className="text-center font-bold text-lg">{prioridad}</span>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center mt-0 pt-0">
-                <div 
-                  className="w-4 h-4 rounded-full mr-1" 
-                  style={{ backgroundColor: getColorEstado() }}
-                ></div>
-                <span 
-                  className="font-medium text-sm"
-                  style={{ 
-                    color: estado === 'En Revisión' ? '#B7950B' : 
-                           estado === 'Avance' ? '#E74C3C' : '#2ECC71' 
-                  }}
-                >{estado}</span>
               </div>
             </div>
 
             {!mostrarTabla && (
-              <div className="mb-2">
-                <div className="flex items-center text-sm">
-                  <span className="text-blue-500">📅</span>
-                  <span className="ml-1"><strong>Inicio:</strong> {fechaInicio || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaInicio || 'hh:mm'}</span>
+              <div className="mb-4">
+                <div className="flex items-center text-sm mb-0">
+                  <span className="mr-1">📅</span>
+                  <span className="font-medium"><strong>Inicio:</strong> {fechaInicio || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaInicio || 'hh:mm'}</span>
                 </div>
                 
                 {estado === 'Recuperado' && (
                   <>
-                    <div className="flex items-center text-sm">
-                      <span className="text-blue-500">📅</span>
-                      <span className="ml-1"><strong>Fin:</strong> {fechaFin || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaFin || 'hh:mm'}</span>
+                    <div className="flex items-center text-sm mb-0">
+                      <span className="mr-1">📅</span>
+                      <span className="font-medium"><strong>Fin:</strong> {fechaFin || 'aaaa-mm-dd'} <strong>Hora:</strong> {horaFin || 'hh:mm'}</span>
                     </div>
                     <div className="flex items-center text-sm">
-                      <span className="text-yellow-500">⏳</span>
-                      <span className="ml-1"><strong>Duración:</strong> {calcularDuracion()}</span>
+                      <span className="mr-1">⏳</span>
+                      <span className="font-medium"><strong>Duración:</strong> {calcularDuracion()}</span>
                     </div>
                   </>
                 )}
@@ -508,30 +579,30 @@ const FormularioIncidente = () => {
             )}
             
             {/* Campos adicionales en el comunicado */}
-            {estado === 'Recuperado' && (
+            {estado === 'Recuperado' && !mostrarTabla && (
               <>
-                <div className="mb-1 text-sm leading-tight">
+                <div className="mb-2 text-sm leading-tight font-medium">
                   <strong>Acciones de recuperación:</strong> {accionesRecuperacion || 'Acción que permitió la recuperación del servicio'}
                 </div>
-                <div className="mb-1 text-sm leading-tight">
+                <div className="mb-2 text-sm leading-tight font-medium">
                   <strong>Causa raíz:</strong> {causaRaiz || 'Descripción de la causa'}
                 </div>
               </>
             )}
 
             {(estado === 'En Revisión' || estado === 'Avance') && (
-              <div className="mb-1 text-sm leading-tight">
+              <div className="mb-2 text-sm leading-tight font-medium">
                 <strong>Situación actual:</strong> {situacionActual || 'Descripción que ayude a entender en donde está la revisión.'}
               </div>
             )}
 
-            <div className="mb-1 text-sm leading-tight">
+            <div className="mb-4 text-sm leading-tight font-medium">
               <strong>Impacto:</strong> {impacto || 'Afectación servicio / usuarios'}
             </div>
 
             {nota && (
-              <div className="mb-1 text-sm leading-tight">
-                <span className="text-orange-500">📣</span> <strong>NOTA:</strong> {nota}
+              <div className="text-sm leading-tight font-medium">
+                <span className="mr-1">📣</span> <strong>NOTA:</strong> {nota}
               </div>
             )}
           </div>
