@@ -608,11 +608,6 @@ const FormularioIncidente = () => {
           </div>
         </div>
       </div>
-      
-      {/* Pie de página con atribución */}
-      <div className="text-center mt-8 mb-4 text-gray-600">
-        <p className="text-sm">© 2025 Generador de Comunicados de Incidentes • Desarrollado por Luis Alberto Herrera Lara</p>
-      </div>
     </div>
   );
 };
